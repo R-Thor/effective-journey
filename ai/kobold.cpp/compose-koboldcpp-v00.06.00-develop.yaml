@@ -28,7 +28,7 @@ services:
     container_name: kobold.cpp
 
     ports:
-      - "5001:5001"
+      - "20001:5001"
 
     devices:
       - nvidia.com/gpu=all

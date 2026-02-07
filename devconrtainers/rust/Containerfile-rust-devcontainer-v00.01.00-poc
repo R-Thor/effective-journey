@@ -1,0 +1,62 @@
+# ------------------------------------------------------------
+# Base image: Debian stable-slim
+# ------------------------------------------------------------
+FROM debian:stable-slim
+
+# ------------------------------------------------------------
+# Version metadata (semantic, narratable)
+# ------------------------------------------------------------
+LABEL org.opencontainers.image.version="v00.01.00"
+LABEL org.opencontainers.image.title="rust-devcontainer"
+LABEL org.opencontainers.image.description="Deterministic Rust development environment on Debian stable-slim"
+
+# ------------------------------------------------------------
+# Noninteractive apt to avoid prompts during build
+# ------------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ------------------------------------------------------------
+# Install system dependencies required for Rust development
+# ------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        build-essential \
+        pkg-config \
+        git \
+        openssl \
+        libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# Install Rust via rustup (canonical upstream)
+# ------------------------------------------------------------
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+      | sh -s -- -y --no-modify-path
+
+# ------------------------------------------------------------
+# Add cargo + rustc to PATH
+# ------------------------------------------------------------
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# ------------------------------------------------------------
+# Preinstall common Rust components
+# ------------------------------------------------------------
+RUN rustup component add rustfmt clippy
+
+# ------------------------------------------------------------
+# Create non-root dev user
+# ------------------------------------------------------------
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+RUN groupadd --gid ${USER_GID} ${USERNAME} && \
+    useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME}
+
+# ------------------------------------------------------------
+# Working directory
+# ------------------------------------------------------------
+USER ${USERNAME}
+WORKDIR /workspace

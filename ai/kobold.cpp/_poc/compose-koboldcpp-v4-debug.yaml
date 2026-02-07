@@ -1,0 +1,43 @@
+version: "3.9"
+
+# ==============================================================================
+# compose-koboldcpp-v4-debug.yaml
+#
+# DEBUG MODE (foreground, live logs):
+#
+#   podman-compose -f compose-koboldcpp-v4-debug.yaml up
+#
+# Stop:
+#   podman-compose -f compose-koboldcpp-v4-debug.yaml down
+#
+# Logs:
+#   podman logs -f kobold.cpp
+#
+# Notes:
+# - Models mounted from /home/brutef0rce/workspace/ai/models/gguf → /models
+# - Update KCPP_MODEL to switch models
+# - This is a DEBUG-ONLY compose (no daemon service, no profiles)
+# ==============================================================================
+
+version: "3.9"
+
+services:
+  koboldcpp:
+    build:
+      context: .
+      dockerfile: Containerfile-debug
+    container_name: kobold.cpp
+    ports:
+      - "5001:5001"
+    volumes:
+      - /home/brutef0rce/workspace/ai/models/gguf:/models:Z
+    environment:
+      KCPP_MODEL: "/models/Qwen2.5-3B.Q4_K_M.gguf"
+      KCPP_THREADS: "auto"
+      KCPP_CONTEXT: "4096"
+    command: >
+      --model ${KCPP_MODEL}
+      --threads ${KCPP_THREADS}
+      --contextsize ${KCPP_CONTEXT}
+      --api
+    restart: "no"

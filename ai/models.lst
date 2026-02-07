@@ -1,0 +1,4 @@
+../../ai/models
+../../ai/models/gguf
+../../ai/models/gguf/llama-2-7b.Q4_K_M.gguf
+../../ai/models/gguf/Qwen2.5-3B.Q4_K_M.gguf

@@ -1,0 +1,67 @@
+version: "3.9"
+# ==============================================================================
+# compose-daemon-debug.yaml
+#
+# USAGE
+#
+# DAEMON MODE (background service):
+#   podman-compose -f compose-daemon-debug.yaml --profile daemon up -d
+#
+# DEBUG MODE (foreground, live logs):
+#   podman-compose -f compose-daemon-debug.yaml --profile debug up
+#
+# Stop all services:
+#   podman-compose -f compose-daemon-debug.yaml down
+#
+# Logs:
+#   podman logs -f kobold.cpp-daemon
+#   podman logs -f kobold.cpp
+#
+# Notes:
+# - Models are mounted from ~/workspace/ai/models/gguf into /models
+# - Update KCPP_MODEL in environment if switching models
+# - Debug profile runs in foreground; daemon profile restarts automatically
+# ==============================================================================
+
+#https://huggingface.co/mradermacher/Qwen2.5-3B-GGUF/resolve/main/Qwen2.5-3B.Q4_K_M.gguf
+services:
+  koboldcpp:
+    image: localhost/rthor-kobold.cpp:alpha
+    container_name: kobold.cpp
+    profiles: ["debug", "daemon"]
+    ports:
+      - "5001:5001"
+    volumes:
+      - /home/brutef0rce/workspace/ai/models/gguf:/models:Z
+    environment:
+      KCPP_MODEL: "/models/Qwen2.5-3B.Q4_K_M.gguf"
+      KCPP_THREADS: "auto"
+      KCPP_CONTEXT: "4096"
+    command: >
+      ./koboldcpp
+      --model ${KCPP_MODEL}
+      --threads ${KCPP_THREADS}
+      --contextsize ${KCPP_CONTEXT}
+      --api
+    restart: "no"
+
+  koboldcpp-daemon:
+    image: localhost/rthor-kobold.cpp:alpha
+    container_name: kobold.cpp-daemon
+    profiles: ["daemon"]
+    ports:
+      - "5002:5001"
+    volumes:
+      - /home/brutef0rce/workspace/ai/models/gguf:/models:Z
+    environment:
+      KCPP_MODEL: "/models/Qwen2.5-3B.Q4_K_M.gguf"
+      KCPP_THREADS: "auto"
+      KCPP_CONTEXT: "4096"
+    command: >
+      ./koboldcpp
+      --model ${KCPP_MODEL}
+      --threads ${KCPP_THREADS}
+      --contextsize ${KCPP_CONTEXT}
+      --api
+    restart: always
+

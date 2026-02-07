@@ -1,0 +1,67 @@
+version: "3.9"
+
+# ==============================================================================
+# compose-daemon-debug.yaml
+#
+# USAGE
+#
+# DAEMON (background service):
+#   podman-compose -f compose-daemon-debug.yaml --profile daemon up -d
+#
+# DEBUG (foreground, watch logs live):
+#   podman-compose -f compose-daemon-debug.yaml --profile debug up
+#
+# Stop:
+#   podman-compose -f compose-daemon-debug.yaml down
+#
+# Logs:
+#   podman logs -f llama-daemon
+#   podman logs -f llama-debug
+# ==============================================================================
+
+services:
+
+  llama-daemon:
+    image: rthor-llama.cpp-runtime:alpha
+    container_name: llama-daemon
+    profiles: ["daemon"]
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ~/workspace/ai/models/gguf:/models:Z
+    command:
+      - /opt/llama.cpp/build/bin/llama-server
+      - --model
+      - /models/llama-2-7b.Q4_K_M.gguf
+      - --prompt-prefix
+      - ""
+      - --prompt-suffix
+      - ""
+      - --no-jinja
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+
+  llama-debug:
+    image: rthor-llama.cpp-runtime:alpha
+    container_name: llama-debug
+    profiles: ["debug"]
+    network_mode: host
+    restart: "no"
+    volumes:
+      - ~/workspace/ai/models/gguf:/models:Z
+    command:
+      - /opt/llama.cpp/build/bin/llama-server
+      - --model
+      - /models/llama-2-7b.Q4_K_M.gguf
+      - --prompt-prefix
+      - ""
+      - --prompt-suffix
+      - ""
+      - --no-jinja
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --verbose

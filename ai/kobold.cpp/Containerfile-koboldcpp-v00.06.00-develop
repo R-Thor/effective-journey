@@ -1,0 +1,80 @@
+# ==============================================================================
+# Containerfile-koboldcpp-v00.06.00-develop  (Development Builder Image)
+#
+# STATE: Development Milestone v00.06.00
+#
+# ABSTRACT:
+#   A reproducible builder environment for generating Vulkan‑accelerated KoboldCpp
+#   binaries. This stage assembles all development dependencies and feeds the
+#   multi‑stage pipeline that produces the final production runtime.
+#
+# PURPOSE:
+#   This image is the *builder stage* for KoboldCpp during active development.
+#   It contains the full toolchain required to compile KoboldCpp with:
+#     - LLAMA_OPENBLAS=1
+#     - LLAMA_VULKAN=1
+#     - LLAMA_PORTABLE=1
+#     - KCPP_NO_GUI=1
+#
+#   This image intentionally includes:
+#     - build-essential, git, cmake
+#     - Vulkan SDK + Mesa Vulkan drivers
+#     - Python runtime
+#     - all dependencies needed to compile koboldcpp_vulkan.so
+#
+#   This image is NOT a production runtime.
+#   It is used to:
+#     - iterate on source builds
+#     - validate Vulkan backend compilation
+#     - test CDI GPU passthrough
+#     - debug build flags and runtime behavior
+#
+# NEXT STEP:
+#   A clean, minimal, production-ready image is built FROM this one using a
+#   multi-stage Containerfile (Containerfile-koboldcpp-v00.06.00-stable), which copies only:
+#     - koboldcpp.py
+#     - kcpp_adapters/
+#     - compiled .so backends
+#
+# VERSIONING:
+#   This builder image corresponds to development release:
+#       r-thor-koboldcpp:v00.06.00-develop
+#
+# BUILD:
+#   podman build -f Containerfile-koboldcpp-v00.06.00-develop -t r-thor-koboldcpp:v00.06.00-develop .
+#
+# ==============================================================================
+
+
+FROM debian:stable-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential \
+        git \
+        cmake \
+        libsdl2-dev \
+        python3 \
+        python3-pip \
+        libnuma-dev \
+        libpthread-stubs0-dev \
+        curl \
+        libvulkan1 \
+        libvulkan-dev \
+        vulkan-tools \
+        mesa-vulkan-drivers && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Build KoboldCpp with OpenBLAS + Vulkan + Portable
+RUN git clone https://github.com/LostRuins/koboldcpp.git . && \
+    make LLAMA_OPENBLAS=1 LLAMA_VULKAN=1 LLAMA_PORTABLE=1 KCPP_NO_GUI=1 -j$(nproc)
+
+RUN mkdir /models
+
+EXPOSE 5001
+
+ENTRYPOINT ["python3", "/app/koboldcpp.py"]

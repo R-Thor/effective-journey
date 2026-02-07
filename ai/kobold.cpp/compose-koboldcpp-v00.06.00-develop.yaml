@@ -1,0 +1,53 @@
+version: "3.9"
+
+# ==============================================================================
+# File: compose-koboldcpp-v00.06.00-develop.yaml
+#
+# DEVELOPMENT MODE (foreground, live logs):
+#
+#   podman-compose -f compose-koboldcpp-v00.06.00-develop.yaml up
+#   podman-compose -f compose-koboldcpp-v00.06.00-develop.yaml down
+#
+# Logs:
+#   podman logs -f kobold.cpp
+#
+# Notes:
+# - Models mounted from /home/brutef0rce/work/ai/models/gguf → /models
+# - Update KCPP_MODEL to switch models
+# - GPU passthrough enabled via CDI: nvidia.com/gpu=all
+# - NVIDIA Vulkan ICD mounted for ggml_vulkan backend visibility
+# ==============================================================================
+
+services:
+  koboldcpp:
+    image: localhost/r-thor-koboldcpp:v00.06.00-develop
+    build:
+      context: .
+      dockerfile: Containerfile-koboldcpp-v00.06.00-develop
+
+    container_name: kobold.cpp
+
+    ports:
+      - "5001:5001"
+
+    devices:
+      - nvidia.com/gpu=all
+
+    volumes:
+      - /home/brutef0rce/work/ai/models/gguf:/models:Z
+      - /usr/share/vulkan/icd.d/nvidia_icd.json:/usr/share/vulkan/icd.d/nvidia_icd.json:Z
+
+    environment:
+      KCPP_MODEL: "/models/Qwen2.5-3B.Q4_K_M.gguf"
+      KCPP_THREADS: "4"
+      KCPP_CONTEXT: "4096"
+
+    command: >
+      --model ${KCPP_MODEL}
+      --threads ${KCPP_THREADS}
+      --contextsize ${KCPP_CONTEXT}
+      --usevulkan
+      --gpulayers 50
+      --port 5001
+
+    restart: "no"

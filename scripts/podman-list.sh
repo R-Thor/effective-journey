@@ -1,0 +1,4 @@
+podman container ls -a
+podman image ls -a
+podman volume ls
+podman network ls

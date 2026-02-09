@@ -1,4 +1,24 @@
 # ------------------------------------------------------------
+# rust-devcontainer v00.01.01
+# Minimal Rust + Neovim environment for direct container use
+#
+# Build:
+#   podman build \
+#     -f Containerfile-rust-devcontainer-v00.01.01 \
+#     -t r-thor-rust-devcontainer:v00.01.01 \
+#     -t r-thor-rust-devcontainer:latest \
+#     .
+#
+# Run (mount ~/work/slush as workspace):
+#   podman run --rm -it \
+#     --user $(id -u):$(id -g) \
+#     -v "$HOME/work/slush:/workspace" \
+#     -w /workspace \
+#     r-thor-rust-devcontainer:v00.01.01 \
+#     bash
+# ------------------------------------------------------------
+
+# ------------------------------------------------------------
 # Base image: Debian stable-slim
 # ------------------------------------------------------------
 FROM debian:stable-slim
@@ -6,9 +26,9 @@ FROM debian:stable-slim
 # ------------------------------------------------------------
 # Version metadata (semantic, narratable)
 # ------------------------------------------------------------
-LABEL org.opencontainers.image.version="v00.01.00"
+LABEL org.opencontainers.image.version="v00.01.01"
 LABEL org.opencontainers.image.title="rust-devcontainer"
-LABEL org.opencontainers.image.description="Deterministic Rust development environment on Debian stable-slim"
+LABEL org.opencontainers.image.description="Minimal Rust development environment on Debian stable-slim"
 
 # ------------------------------------------------------------
 # Noninteractive apt to avoid prompts during build
@@ -16,7 +36,7 @@ LABEL org.opencontainers.image.description="Deterministic Rust development envir
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------------------------------------
-# Install system dependencies required for Rust development
+# Install system dependencies + Neovim
 # ------------------------------------------------------------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -37,7 +57,6 @@ ENV EDITOR=nvim
 ENV VISUAL=nvim
 RUN update-alternatives --set editor /usr/bin/nvim
 
-
 # ------------------------------------------------------------
 # Install Rust via rustup (canonical upstream)
 # ------------------------------------------------------------
@@ -55,17 +74,6 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN rustup component add rustfmt clippy
 
 # ------------------------------------------------------------
-# Create non-root dev user
+# Default working directory (overridden at runtime)
 # ------------------------------------------------------------
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=1000
-
-RUN groupadd --gid ${USER_GID} ${USERNAME} && \
-    useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME}
-
-# ------------------------------------------------------------
-# Working directory
-# ------------------------------------------------------------
-USER ${USERNAME}
 WORKDIR /workspace
